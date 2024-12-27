@@ -50,7 +50,7 @@ class Snake:
         new_head = (head_x + direction[0], head_y + direction[1])
 
         # Check if new head is in the body
-        return new_head in self.body
+        return new_head in list(self.body)[:-1]
 
 
 if __name__ == '__main__':

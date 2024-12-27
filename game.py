@@ -24,8 +24,8 @@ class Game:
         self.w = w
         self.h = h
 
-        self.snake_ai = Snake(10, 10, 7, (0, 1))
-        self.snake_bot = Snake(20, 12, 5, (1, 0))
+        self.snake_ai = Snake(28, 20, 20, (0, 1))
+        self.snake_bot = Snake(30, 12, 5, (1, 0))
 
         self.display = pygame.display.set_mode((w,h))
         pygame.display.set_caption('Snake')
@@ -105,11 +105,14 @@ class Game:
                or (bot_movement[0] != 0 and bot_movement[1] != 0)):
             bot_movement = (random.randint(-1, 1), random.randint(-1, 1))
 
+        #check if game over
+        game_over = self.is_colliding(bot_movement, (1, 0))
+
         # move snake
         self.snake_bot.move(bot_movement)
 
-        #check if game over
-
+        if game_over != 0:
+            print("bastard")
 
         #check if apple eaten
 
@@ -134,20 +137,26 @@ class Game:
 
         # Check if AI snake is colliding with the border
         ai_head_x, ai_head_y = self.snake_ai.body[0]
+        ai_head_x += ai_direction[0]
+        ai_head_y += ai_direction[1]
+
         if ai_head_x < 0 or ai_head_x >= self.w // BLOCK_SIZE or ai_head_y < 0 or ai_head_y >= self.h // BLOCK_SIZE:
             return -1
 
         # Check if bot snake is colliding with the border
         bot_head_x, bot_head_y = self.snake_bot.body[0]
+        bot_head_x += bot_direction[0]
+        bot_head_y += bot_direction[1]
+
         if bot_head_x < 0 or bot_head_x >= self.w // BLOCK_SIZE or bot_head_y < 0 or bot_head_y >= self.h // BLOCK_SIZE:
             return 1
 
         # Check if AI snake is colliding with the bot snake
-        if self.snake_ai.body[0] in self.snake_bot.body:
+        if (ai_head_x, ai_head_y) in self.snake_bot.body:
             return -1
 
         # Check if bot snake is colliding with the AI snake
-        if self.snake_bot.body[0] in self.snake_ai.body:
+        if (bot_head_x, bot_head_y) in self.snake_ai.body:
             return 1
 
         return 0
