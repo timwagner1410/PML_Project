@@ -7,10 +7,10 @@ class Snake:
             init_x: int,
             init_y: int,
             init_length: int,
-            init_direction: tuple[int, int] = (1, 0)
+            init_direction: tuple[int, int] = (-1, 0)
     ):
-        self.body = deque([(init_x - i, init_y) for i in range(init_length)])
-        self.direction = init_direction # (x, y) direction, if e.g. x = 1, y = 0, then moving right
+        self.direction = init_direction # (x, y) direction ranging from -1 to 1
+        self.body = deque([(init_x - self.direction[0] * i, init_y - self.direction[1] * i) for i in range(init_length)])
 
     def move(self, direction: tuple[int, int]) -> None:
         """
@@ -54,12 +54,5 @@ class Snake:
 
 
 if __name__ == '__main__':
-    snake = Snake(5, 5, 6)
+    snake = Snake(5, 5, 5)
     print(snake.body)
-    print(snake.direction)
-    snake.move((0, 1)) # up
-    snake.move((1, 0)) # right
-    print(snake.is_self_colliding((0, -1)))
-    snake.move((0, -1)) # down
-    print(snake.body)
-    print(snake.direction)
