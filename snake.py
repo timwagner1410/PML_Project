@@ -12,9 +12,10 @@ class Snake:
         self.direction = init_direction # (x, y) direction ranging from -1 to 1
         self.body = deque([(init_x - self.direction[0] * i, init_y - self.direction[1] * i) for i in range(init_length)])
 
-    def move(self, direction: tuple[int, int]) -> None:
+    def move(self, direction: tuple[int, int], apple_eaten: bool) -> None:
         """
         Move the snake in the given direction, update body and direction
+        :param apple_eaten: whether apple is eaten, if True, do not pop tail
         :param direction: a tuple of size 2 from -1 to 1
         :return: None
         """
@@ -33,10 +34,9 @@ class Snake:
         # Add new head to the body
         self.body.appendleft(new_head)
 
-        """ TO DO: Detect Apples, then do not pop tail """
-
         # Remove the tail
-        self.body.pop()
+        if not apple_eaten:
+            self.body.pop()
 
     def is_self_colliding(self, direction: tuple[int, int]) -> bool:
         """

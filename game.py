@@ -25,7 +25,7 @@ class Game:
         self.h = h
 
         self.snake_ai = Snake(28, 20, 20, (0, 1))
-        self.snake_bot = Snake(30, 12, 5, (1, 0))
+        self.snake_bot = Snake(12, 12, 5, (1, 0))
 
         self.display = pygame.display.set_mode((w,h))
         pygame.display.set_caption('Snake')
@@ -102,29 +102,34 @@ class Game:
         # make random, but valid movement
         while ((bot_movement[0] == -direction[0] and bot_movement[1] == -direction[1])
                or (bot_movement[0] == 0 and bot_movement[1] == 0)
-               or (bot_movement[0] != 0 and bot_movement[1] != 0)):
+               or (bot_movement[0] != 0 and bot_movement[1] != 0)
+               or self.snake_bot.is_self_colliding(bot_movement)):
             bot_movement = (random.randint(-1, 1), random.randint(-1, 1))
 
         #check if game over
         game_over = self.is_colliding(bot_movement, (1, 0))
 
-        # move snake
-        self.snake_bot.move(bot_movement)
-
-        if game_over != 0:
-            print("bastard")
-
         #check if apple eaten
+        if game_over == 2:
+            print(f"Bot Snake gets Apple")
+            self.score = Scores(self.score.ai_score + 1, self.score.enemy_score)
+            self.place_food()
 
+        # move snake
+        self.snake_bot.move(bot_movement, game_over == 2)
 
         #return game over, score
-
-        pass
+        return game_over, self.score
 
     def is_colliding(self, bot_direction: tuple[int, int], ai_direction: tuple[int, int]) -> int:
         """
         Check if the snake is colliding with itself, the border or the other snake
-        :return: 1 if bot snake collides, -1 if AI snake collides, 0 otherwise
+        :return:
+            2: Bot Snake gets Apple
+            1: Bot Snake collides
+            0: Nothing happens
+            -1: AI Snake collides
+            -2: AI Snake gets Apple
         """
 
         # Check if AI snake is colliding with itself
@@ -159,12 +164,26 @@ class Game:
         if (bot_head_x, bot_head_y) in self.snake_ai.body:
             return 1
 
+        # Check if AI snake gets the apple
+        if (ai_head_x, ai_head_y) == (self.apple.x // BLOCK_SIZE, self.apple.y // BLOCK_SIZE):
+            return -2
+
+        # Check if bot snake gets the apple
+        if (bot_head_x, bot_head_y) == (self.apple.x // BLOCK_SIZE, self.apple.y // BLOCK_SIZE):
+            return 2
+
         return 0
 
 if __name__ == '__main__':
     game = Game()
+    game_over = 0
 
     while True:
         game.update_ui()
-        game.clock.tick(5)
-        game.play_step()
+
+        if abs(game_over) == 1:
+            raise Exception("Game Over")
+
+        game.clock.tick(30)
+        print(len(game.snake_bot.body))
+        game_over, score = game.play_step()
