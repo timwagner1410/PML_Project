@@ -1,12 +1,12 @@
 import pygame
 import random
 from collections import namedtuple
-from snake import Snake
+from snake import Snake, BotSnake
 
 pygame.init()
 
 Point = namedtuple('Point', 'x, y')
-Scores = namedtuple('Scores', 'player_1 Score, player_2_score')
+Scores = namedtuple('Scores', 'player_1_score, player_2_score')
 
 #rgb colors
 WHITE = (255, 255, 255)
@@ -15,17 +15,20 @@ BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 BLACK = (0, 0, 0)
 
-BLOCK_SIZE = 20
+BLOCK_SIZE = 30
 
 
 class Game:
 
-    def __init__(self, w=640, h=480):
+    def __init__(self, w=600, h=480):
         self.w = w
         self.h = h
 
-        self.snake_1 = Snake(28, 20, 20, (0, 1))
-        self.snake_2 = Snake(12, 12, 5, (1, 0))
+        assert self.w % BLOCK_SIZE == 0, "Width not divisible by block size"
+        assert self.h % BLOCK_SIZE == 0, "Height not divisible by block size"
+
+        self.snake_1 = BotSnake(15, 15, 5, (0, 1))
+        self.snake_2 = BotSnake(12, 12, 5, (1, 0))
 
         self.display = pygame.display.set_mode((w,h))
         pygame.display.set_caption('Snake')
@@ -94,32 +97,31 @@ class Game:
     def play_step(self):
 
         # update snake position
-        bot_movement = (0, 0)
-        direction = self.snake_2.direction
+        snake_1_dir = self.snake_1.get_random_direction((self.w, self.h, BLOCK_SIZE))
+        snake_2_dir = self.snake_2.get_random_direction((self.w, self.h, BLOCK_SIZE))
 
-        # make random, but valid movement
-        while ((bot_movement[0] == -direction[0] and bot_movement[1] == -direction[1])
-               or (bot_movement[0] == 0 and bot_movement[1] == 0)
-               or (bot_movement[0] != 0 and bot_movement[1] != 0)
-               or self.snake_2.is_self_colliding(bot_movement)):
-            bot_movement = (random.randint(-1, 1), random.randint(-1, 1))
-
-        #check if game over
-        game_over = self.is_colliding(bot_movement, (1, 0))
+        # check if game over
+        game_over = self.is_colliding(snake_1_dir, snake_2_dir)
 
         # check if apple eaten
-        if game_over == 2:
-            print(f"Bot Snake gets Apple")
-            self.score = Scores(self.score.ai_score + 1, self.score.enemy_score)
+        if game_over == -2:
+            print(f"Snake 1 gets Apple")
+            self.score = Scores(self.score.player_1_score + 1, self.score.player_2_score)
+            self.place_food()
+
+        elif game_over == 2:
+            print(f"Snake 2 gets Apple")
+            self.score = Scores(self.score.player_1_score, self.score.player_2_score + 1)
             self.place_food()
 
         # move snake
-        self.snake_2.move(bot_movement, game_over == 2)
+        self.snake_1.move(snake_1_dir, game_over == -2)
+        self.snake_2.move(snake_2_dir, game_over == 2)
 
         # return game over, score
         return game_over, self.score
 
-    def is_colliding(self, direction_snake_2: tuple[int, int], direction_snake_1: tuple[int, int]) -> int:
+    def is_colliding(self, direction_snake_1: tuple[int, int], direction_snake_2: tuple[int, int]) -> int:
         """
         Check if the snake is colliding with itself, the border or the other snake
         :return:
@@ -142,26 +144,32 @@ class Game:
 
         # Check if snake 1 is colliding with itself
         if self.snake_1.is_self_colliding(direction_snake_1):
+            print("Snake 1 collides with itself")
             return -1
 
         # Check if snake 2 is colliding with itself
         if self.snake_2.is_self_colliding(direction_snake_2):
+            print("Snake 2 collides with itself")
             return 1
 
         # check for collision of snake 1 with the border
         if head_1_x < 0 or head_1_x >= self.w // BLOCK_SIZE or head_1_y < 0 or head_1_y >= self.h // BLOCK_SIZE:
+            print("Snake 1 collides with border")
             return -1
 
         # check for collision of snake 2 with the border
         if head_2_x < 0 or head_2_x >= self.w // BLOCK_SIZE or head_2_y < 0 or head_2_y >= self.h // BLOCK_SIZE:
+            print("Snake 2 collides with border")
             return 1
 
         # Check if snake 1 is colliding with snake 2
         if (head_1_x, head_1_y) in self.snake_2.body:
+            print("Snake 1 collides into Snake 2")
             return -1
 
         # Check if snake 2 is colliding with snake 1
         if (head_2_x, head_2_y) in self.snake_1.body:
+            print("Snake 2 collides into Snake 1")
             return 1
 
         # Check if snake 1 gets the apple
@@ -181,9 +189,11 @@ if __name__ == '__main__':
     while True:
         game.update_ui()
 
-        if abs(game_over) == 1:
-            raise Exception("Game Over")
-
-        game.clock.tick(5)
-        print(len(game.snake_2.body))
-        game_over, score = game.play_step()
+        if game_over == 1:
+            raise Exception("Game Over: Winner is Player 1 (blue)")
+        elif game_over == -1:
+            raise Exception("Game Over: Winner is Player 2 (green)")
+        else:
+            game.clock.tick(5)
+            print(len(game.snake_1.body))
+            game_over, score = game.play_step()

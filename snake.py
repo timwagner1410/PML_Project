@@ -1,4 +1,5 @@
 from collections import deque
+import random
 
 class Snake:
 
@@ -51,6 +52,32 @@ class Snake:
 
         # Check if new head is in the body
         return new_head in list(self.body)[:-1]
+
+
+class BotSnake(Snake):
+
+    def __init__(self, init_x: int, init_y: int, init_length: int, init_direction: tuple[int, int] = (-1, 0)):
+        super().__init__(init_x, init_y, init_length, init_direction)
+
+    def get_random_direction(self, playground_info: tuple[int, int, int]) -> tuple[int, int]:
+        """
+        Gets a random, but valid direction for the bot snake
+        :param playground_info: (width, height, block_size)
+        :return: new direction
+        """
+        width, height, block_size = playground_info
+        new_direction = (0, 0)
+        direction = self.direction
+
+        while ((new_direction[0] == -direction[0] and new_direction[1] == -direction[1])
+               or (new_direction[0] == 0 and new_direction[1] == 0)
+               or (new_direction[0] != 0 and new_direction[1] != 0)
+               or self.is_self_colliding(new_direction)
+               or not (0 <= self.body[0][0] + new_direction[0] < width // block_size)
+               or not (0 <= self.body[0][1] + new_direction[1] < height // block_size)):
+            new_direction = (random.randint(-1, 1), random.randint(-1, 1))
+
+        return new_direction
 
 
 if __name__ == '__main__':
