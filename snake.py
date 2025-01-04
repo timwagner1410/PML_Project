@@ -68,17 +68,40 @@ class BotSnake(Snake):
         width, height, block_size = playground_info
         new_direction = (0, 0)
         direction = self.direction
+        tries = 0
+        max_tries = 500
 
         while ((new_direction[0] == -direction[0] and new_direction[1] == -direction[1])
                or (new_direction[0] == 0 and new_direction[1] == 0)
                or (new_direction[0] != 0 and new_direction[1] != 0)
                or self.is_self_colliding(new_direction)
                or not (0 <= self.body[0][0] + new_direction[0] < width // block_size)
-               or not (0 <= self.body[0][1] + new_direction[1] < height // block_size)):
+               or not (0 <= self.body[0][1] + new_direction[1] < height // block_size)
+                ) and tries < max_tries:
             new_direction = (random.randint(-1, 1), random.randint(-1, 1))
+            tries += 1
 
-        return new_direction
+        return new_direction if tries < max_tries else direction
 
+class PlayerSnake(Snake):
+
+    def __init__(self, init_x: int, init_y: int, init_length: int, init_direction: tuple[int, int] = (-1, 0)):
+        super().__init__(init_x, init_y, init_length, init_direction)
+        self.changed: bool = False # Whether the direction has been changed, set to False after each move
+
+    def change_direction(self, new_direction: tuple[int, int]) -> None:
+        """
+        Change the direction of the snake
+        :param new_direction: a tuple of size 2 from -1 to 1
+        :return: None
+        """
+        # Check some edge cases
+        assert not (new_direction[0] == -self.direction[0] and new_direction[1] == -self.direction[1]), "Opposite direction"
+        assert not (new_direction[0] == 0 and new_direction[1] == 0), "No direction"
+
+        # Update direction
+        self.direction = new_direction
+        self.changed = True
 
 if __name__ == '__main__':
     snake = Snake(5, 5, 5)

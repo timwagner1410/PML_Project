@@ -1,7 +1,8 @@
 import pygame
 import random
 from collections import namedtuple
-from snake import Snake, BotSnake
+from snake import BotSnake, PlayerSnake
+from typing import Optional
 
 pygame.init()
 
@@ -55,10 +56,7 @@ class Game:
         pygame.display.update()
 
     def draw_snakes(self) -> None:
-        """
-        Draw the snakes on the screen
-        :return: None
-        """
+        """ Draw the snakes on the screen """
 
         # Assign colors to snakes
         snakes = [
@@ -89,12 +87,40 @@ class Game:
         pygame.draw.rect(self.display, RED, pygame.Rect(self.apple.x, self.apple.y, BLOCK_SIZE, BLOCK_SIZE))
 
     def place_food(self):
+        """ Place the food on the screen randomly """
         x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
         y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
         self.apple = Point(x, y)
 
+    def handle_events(self, player: Optional[PlayerSnake]) -> None:
+        """
+        Enables a Player to control the snake using arrow keys
+        :param player: PlayerSnake object
+        """
+
+        if player is None:
+            return
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT and not player.direction == (1, 0):
+                    player.change_direction((-1, 0))
+                elif event.key == pygame.K_RIGHT and not player.direction == (-1, 0):
+                    player.change_direction((1, 0))
+                elif event.key == pygame.K_UP and not player.direction == (0, 1):
+                    player.change_direction((0, -1))
+                elif event.key == pygame.K_DOWN and not player.direction == (0, -1):
+                    player.change_direction((0, 1))
 
     def play_step(self):
+
+        assert not (isinstance(self.snake_1, PlayerSnake) and isinstance(self.snake_2, PlayerSnake)), "Both snakes cannot be controlled by players"
+
+        if isinstance(self.snake_1, PlayerSnake):
+            self.handle_events(self.snake_1)
 
         # update snake position
         snake_1_dir = self.snake_1.get_random_direction((self.w, self.h, BLOCK_SIZE))
@@ -190,10 +216,11 @@ if __name__ == '__main__':
         game.update_ui()
 
         if game_over == 1:
-            raise Exception("Game Over: Winner is Player 1 (blue)")
+            print("Game Over: Winner is Player 1 (blue)")
+            break
         elif game_over == -1:
-            raise Exception("Game Over: Winner is Player 2 (green)")
+            print("Game Over: Winner is Player 2 (green)")
+            break
         else:
-            game.clock.tick(5)
-            print(len(game.snake_1.body))
+            game.clock.tick(3)
             game_over, score = game.play_step()
