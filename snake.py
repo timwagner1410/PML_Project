@@ -1,5 +1,6 @@
 from collections import deque
 import random
+import math
 
 class Snake:
 
@@ -10,6 +11,7 @@ class Snake:
             init_length: int,
             init_direction: tuple[int, int] = (-1, 0)
     ):
+        self.directions = {(1,0),(0,1),(-1,0),(0,-1)}
         self.direction = init_direction # (x, y) direction ranging from -1 to 1
         self.body = deque([(init_x - self.direction[0] * i, init_y - self.direction[1] * i) for i in range(init_length)])
 
@@ -71,14 +73,43 @@ class BotSnake(Snake):
         tries = 0
         max_tries = 500
 
-        while ((new_direction[0] == -direction[0] and new_direction[1] == -direction[1])
-               or (new_direction[0] == 0 and new_direction[1] == 0)
-               or (new_direction[0] != 0 and new_direction[1] != 0)
-               or self.is_self_colliding(new_direction)
+        possible_directions = self.directions - {(-direction[0], -direction[1])}
+
+        while (self.is_self_colliding(new_direction)
                or not (0 <= self.body[0][0] + new_direction[0] < width // block_size)
                or not (0 <= self.body[0][1] + new_direction[1] < height // block_size)
                 ) and tries < max_tries:
-            new_direction = (random.randint(-1, 1), random.randint(-1, 1))
+            new_direction = random.choice(list(possible_directions))
+            tries += 1
+
+        return new_direction if tries < max_tries else direction
+
+    def get_random_biased_direction(self, playground_info: tuple[int, int, int], apple_location: tuple[int,int]) -> tuple[int, int]:
+        """
+        Gets a random, but valid direction for the bot snake with bias towards the apple
+        :param playground_info: (width, height, block_size)
+        :return: new direction
+        """
+
+        width, height, block_size = playground_info
+        new_direction = (0, 0)
+        direction = self.direction
+        tries = 0
+        max_tries = 500
+        bias = 0.8
+        possible_directions = self.directions - {(-direction[0], -direction[1])}
+
+        while (self.is_self_colliding(new_direction)
+               or not (0 <= self.body[0][0] + new_direction[0] < width // block_size)
+               or not (0 <= self.body[0][1] + new_direction[1] < height // block_size)
+        ) and tries < max_tries:
+            distances = [(math.sqrt((self.body[0][0] + d[0] - apple_location[0]// block_size) ** 2 + (self.body[0][1] + d[1] - apple_location[1]// block_size) ** 2), d) for d in possible_directions]
+            distances.sort(key=lambda x: x[0])
+            print(distances)
+            if random.random() < bias:
+                new_direction = distances[0][1]
+            else:
+                new_direction = random.choice(distances[1:])[1]
             tries += 1
 
         return new_direction if tries < max_tries else direction

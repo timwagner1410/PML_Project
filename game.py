@@ -28,8 +28,8 @@ class Game:
         assert self.w % BLOCK_SIZE == 0, "Width not divisible by block size"
         assert self.h % BLOCK_SIZE == 0, "Height not divisible by block size"
 
-        self.snake_1 = BotSnake(15, 15, 5, (0, 1))
-        self.snake_2 = BotSnake(12, 12, 5, (1, 0))
+        self.snake_1 = BotSnake(15, 12, 5, (0, 1))
+        self.snake_2 = BotSnake(8, 8, 5, (1, 0))
 
         self.display = pygame.display.set_mode((w,h))
         pygame.display.set_caption('Snake')
@@ -92,7 +92,8 @@ class Game:
         y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
         if (x, y) in self.snake_1.body or (x, y) in self.snake_2.body:
             self.place_food()
-        self.apple = Point(x, y)
+        else:
+            self.apple = Point(x, y)
 
     def handle_events(self, player: Optional[PlayerSnake]) -> None:
         """
@@ -125,7 +126,7 @@ class Game:
             self.handle_events(self.snake_1)
 
         # update snake position
-        snake_1_dir = self.snake_1.get_random_direction((self.w, self.h, BLOCK_SIZE))
+        snake_1_dir = self.snake_1.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
         snake_2_dir = self.snake_2.get_random_direction((self.w, self.h, BLOCK_SIZE))
 
         # check if game over
