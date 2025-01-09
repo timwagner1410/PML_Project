@@ -96,14 +96,14 @@ class BotSnake(Snake):
         direction = self.direction
         tries = 0
         max_tries = 500
-        bias = 1
+        bias = 0.8
         possible_directions = self.directions - {(-direction[0], -direction[1])}
 
         while (self.is_self_colliding(new_direction)
                or not (0 <= self.body[0][0] + new_direction[0] < width // block_size)
                or not (0 <= self.body[0][1] + new_direction[1] < height // block_size)
         ) and tries < max_tries:
-            distances = [(math.sqrt((self.body[0][0] + direction[0] - apple_location[0]) ** 2 + (self.body[0][1] + direction[1] - apple_location[1]) ** 2), direction) for direction in possible_directions]
+            distances = [(math.sqrt((self.body[0][0] + d[0] - apple_location[0]// block_size) ** 2 + (self.body[0][1] + d[1] - apple_location[1]// block_size) ** 2), d) for d in possible_directions]
             distances.sort(key=lambda x: x[0])
             print(distances)
             if random.random() < bias:
@@ -111,6 +111,7 @@ class BotSnake(Snake):
             else:
                 new_direction = random.choice(distances[1:])[1]
             tries += 1
+
         return new_direction if tries < max_tries else direction
 
 class PlayerSnake(Snake):
