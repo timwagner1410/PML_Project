@@ -96,7 +96,7 @@ class BotSnake(Snake):
         direction = self.direction
         tries = 0
         max_tries = 500
-        bias = 0.8
+        bias = 0.7
         possible_directions = self.directions - {(-direction[0], -direction[1])}
 
         while (self.is_self_colliding(new_direction)
@@ -105,7 +105,6 @@ class BotSnake(Snake):
         ) and tries < max_tries:
             distances = [(math.sqrt((self.body[0][0] + d[0] - apple_location[0]// block_size) ** 2 + (self.body[0][1] + d[1] - apple_location[1]// block_size) ** 2), d) for d in possible_directions]
             distances.sort(key=lambda x: x[0])
-            print(distances)
             if random.random() < bias:
                 new_direction = distances[0][1]
             else:

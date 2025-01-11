@@ -16,7 +16,7 @@ GREEN = (0, 255, 0)
 BLACK = (0, 0, 0)
 
 BLOCK_SIZE = 30
-human_player = True
+human_player = False
 
 
 class Game:
@@ -29,9 +29,9 @@ class Game:
         assert self.h % BLOCK_SIZE == 0, "Height not divisible by block size"
 
         if not human_player:
-            self.snake_1 = BotSnake(10, 10, 5, (0, 1))
+            self.snake_1 = BotSnake(7, 7, 5, (0, 1))
         else:
-            self.snake_1 = PlayerSnake(15, 10, 5, (0, 1))
+            self.snake_1 = PlayerSnake(15, 11, 5, (0, 1))
 
         self.snake_2 = BotSnake(12, 12, 5, (1, 0))
 
@@ -129,13 +129,13 @@ class Game:
 
         # get new direction for snake
         if not human_player and isinstance(self.snake_1, BotSnake):
-            snake_1_dir = self.snake_1.get_random_direction((self.w, self.h, BLOCK_SIZE))
+            snake_1_dir = self.snake_1.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
         else:
             assert isinstance(self.snake_1, PlayerSnake), "Player 1 is not a PlayerSnake"
             self.handle_events(self.snake_1)
             snake_1_dir = self.snake_1.direction
 
-        snake_2_dir = self.snake_2.get_random_direction((self.w, self.h, BLOCK_SIZE))
+        snake_2_dir = self.snake_2.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
 
         # check if game over
         game_over = self.is_colliding(snake_1_dir, snake_2_dir)
