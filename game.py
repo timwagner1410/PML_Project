@@ -16,7 +16,8 @@ GREEN = (0, 255, 0)
 BLACK = (0, 0, 0)
 
 BLOCK_SIZE = 30
-human_player = False
+HUMAN_PLAYER = False
+TICK_SPEED = 5
 
 
 class Game:
@@ -28,7 +29,7 @@ class Game:
         assert self.w % BLOCK_SIZE == 0, "Width not divisible by block size"
         assert self.h % BLOCK_SIZE == 0, "Height not divisible by block size"
 
-        if not human_player:
+        if not HUMAN_PLAYER:
             self.snake_1 = BotSnake(7, 7, 5, (0, 1))
         else:
             self.snake_1 = PlayerSnake(15, 11, 5, (0, 1))
@@ -94,12 +95,14 @@ class Game:
         pygame.draw.rect(self.display, RED, pygame.Rect(self.apple.x, self.apple.y, BLOCK_SIZE, BLOCK_SIZE))
 
     def place_food(self):
-        x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-        y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-        if (x, y) in self.snake_1.body or (x, y) in self.snake_2.body:
-            self.place_food()
+        all_positions = [Point(x, y) for x in range(0, self.w, BLOCK_SIZE) for y in range(0, self.h, BLOCK_SIZE)]
+        occupied_positions = set(self.snake_1.body) | set(self.snake_2.body)
+        available_positions = [pos for pos in all_positions if pos not in occupied_positions]
+
+        if available_positions:
+            self.apple = random.choice(available_positions)
         else:
-            self.apple = Point(x, y)
+            raise Exception("No available positions to place the apple")
 
     def handle_events(self, player: Snake) -> None:
         """
@@ -128,7 +131,7 @@ class Game:
     def play_step(self):
 
         # get new direction for snake
-        if not human_player and isinstance(self.snake_1, BotSnake):
+        if not HUMAN_PLAYER and isinstance(self.snake_1, BotSnake):
             snake_1_dir = self.snake_1.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
         else:
             assert isinstance(self.snake_1, PlayerSnake), "Player 1 is not a PlayerSnake"
@@ -231,5 +234,5 @@ if __name__ == '__main__':
         elif game_over == -1:
             raise Exception("Game Over: Winner is Player 2 (green)")
         else:
-            game.clock.tick(5)
+            game.clock.tick(TICK_SPEED)
             game_over, score = game.play_step()
