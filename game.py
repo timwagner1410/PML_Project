@@ -1,8 +1,7 @@
 import pygame
 import random
 from collections import namedtuple
-from snake import BotSnake, PlayerSnake
-from typing import Optional
+from snake import PlayerSnake, BotSnake, Snake
 
 pygame.init()
 
@@ -17,6 +16,7 @@ GREEN = (0, 255, 0)
 BLACK = (0, 0, 0)
 
 BLOCK_SIZE = 30
+human_player = True
 
 
 class Game:
@@ -28,8 +28,12 @@ class Game:
         assert self.w % BLOCK_SIZE == 0, "Width not divisible by block size"
         assert self.h % BLOCK_SIZE == 0, "Height not divisible by block size"
 
-        self.snake_1 = BotSnake(15, 12, 5, (0, 1))
-        self.snake_2 = BotSnake(8, 8, 5, (1, 0))
+        if not human_player:
+            self.snake_1 = BotSnake(10, 10, 5, (0, 1))
+        else:
+            self.snake_1 = PlayerSnake(15, 10, 5, (0, 1))
+
+        self.snake_2 = BotSnake(12, 12, 5, (1, 0))
 
         self.display = pygame.display.set_mode((w,h))
         pygame.display.set_caption('Snake')
@@ -56,7 +60,10 @@ class Game:
         pygame.display.update()
 
     def draw_snakes(self) -> None:
-        """ Draw the snakes on the screen """
+        """
+        Draw the snakes on the screen
+        :return: None
+        """
 
         # Assign colors to snakes
         snakes = [
@@ -87,7 +94,6 @@ class Game:
         pygame.draw.rect(self.display, RED, pygame.Rect(self.apple.x, self.apple.y, BLOCK_SIZE, BLOCK_SIZE))
 
     def place_food(self):
-        """ Place the food on the screen randomly """
         x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
         y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
         if (x, y) in self.snake_1.body or (x, y) in self.snake_2.body:
@@ -95,13 +101,13 @@ class Game:
         else:
             self.apple = Point(x, y)
 
-    def handle_events(self, player: Optional[PlayerSnake]) -> None:
+    def handle_events(self, player: Snake) -> None:
         """
         Enables a Player to control the snake using arrow keys
         :param player: PlayerSnake object
         """
 
-        if player is None:
+        if not isinstance(player, PlayerSnake):
             return
 
         for event in pygame.event.get():
@@ -118,15 +124,17 @@ class Game:
                 elif event.key == pygame.K_DOWN and not player.direction == (0, -1):
                     player.change_direction((0, 1))
 
+
     def play_step(self):
 
-        assert not (isinstance(self.snake_1, PlayerSnake) and isinstance(self.snake_2, PlayerSnake)), "Both snakes cannot be controlled by players"
-
-        if isinstance(self.snake_1, PlayerSnake):
+        # get new direction for snake
+        if not human_player and isinstance(self.snake_1, BotSnake):
+            snake_1_dir = self.snake_1.get_random_direction((self.w, self.h, BLOCK_SIZE))
+        else:
+            assert isinstance(self.snake_1, PlayerSnake), "Player 1 is not a PlayerSnake"
             self.handle_events(self.snake_1)
+            snake_1_dir = self.snake_1.direction
 
-        # update snake position
-        snake_1_dir = self.snake_1.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
         snake_2_dir = self.snake_2.get_random_direction((self.w, self.h, BLOCK_SIZE))
 
         # check if game over
@@ -219,11 +227,9 @@ if __name__ == '__main__':
         game.update_ui()
 
         if game_over == 1:
-            print("Game Over: Winner is Player 1 (blue)")
-            break
+            raise Exception("Game Over: Winner is Player 1 (blue)")
         elif game_over == -1:
-            print("Game Over: Winner is Player 2 (green)")
-            break
+            raise Exception("Game Over: Winner is Player 2 (green)")
         else:
-            game.clock.tick(3)
+            game.clock.tick(5)
             game_over, score = game.play_step()
