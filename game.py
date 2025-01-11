@@ -96,7 +96,10 @@ class Game:
     def place_food(self):
         x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
         y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-        self.apple = Point(x, y)
+        if (x, y) in self.snake_1.body or (x, y) in self.snake_2.body:
+            self.place_food()
+        else:
+            self.apple = Point(x, y)
 
     def handle_events(self, player: Snake) -> None:
         """
