@@ -18,6 +18,7 @@ BLACK = (0, 0, 0)
 BLOCK_SIZE = 30
 HUMAN_PLAYER = False
 TICK_SPEED = 5
+GAME_STATE = 0
 
 
 class Game:
@@ -127,8 +128,9 @@ class Game:
                 elif event.key == pygame.K_DOWN and not player.direction == (0, -1):
                     player.change_direction((0, 1))
 
-
     def play_step(self):
+
+        global GAME_STATE
 
         # get new direction for snake
         if not HUMAN_PLAYER and isinstance(self.snake_1, BotSnake):
@@ -140,28 +142,32 @@ class Game:
 
         snake_2_dir = self.snake_2.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
 
+        # move snake
+        self.snake_1.move(snake_1_dir, GAME_STATE == -2)
+        self.snake_2.move(snake_2_dir, GAME_STATE == 2)
+
         # check if game over
-        game_over = self.is_colliding(snake_1_dir, snake_2_dir)
+        GAME_STATE = self.is_colliding()
 
         # check if apple eaten
-        if game_over == -2:
+        if GAME_STATE == -2:
             print(f"Snake 1 gets Apple")
             self.score = Scores(self.score.player_1_score + 1, self.score.player_2_score)
             self.place_food()
 
-        elif game_over == 2:
+        elif GAME_STATE == 2:
             print(f"Snake 2 gets Apple")
             self.score = Scores(self.score.player_1_score, self.score.player_2_score + 1)
             self.place_food()
 
-        # move snake
-        self.snake_1.move(snake_1_dir, game_over == -2)
-        self.snake_2.move(snake_2_dir, game_over == 2)
-
         # return game over, score
-        return game_over, self.score
+        return GAME_STATE, self.score
 
-    def is_colliding(self, direction_snake_1: tuple[int, int], direction_snake_2: tuple[int, int]) -> int:
+    def is_colliding(
+            self,
+            direction_snake_1: tuple[int, int] = None,
+            direction_snake_2: tuple[int, int] = None
+    ) -> int:
         """
         Check if the snake is colliding with itself, the border or the other snake
         :return:
@@ -174,21 +180,29 @@ class Game:
 
         # Get head & new position of snake 1
         head_1_x, head_1_y = self.snake_1.body[0]
-        head_1_x += direction_snake_1[0]
-        head_1_y += direction_snake_1[1]
+        if direction_snake_1:
+            head_1_x += direction_snake_1[0]
+            head_1_y += direction_snake_1[1]
 
         # Get head & new position of snake 2
         head_2_x, head_2_y = self.snake_2.body[0]
-        head_2_x += direction_snake_2[0]
-        head_2_y += direction_snake_2[1]
+        if direction_snake_2:
+            head_2_x += direction_snake_2[0]
+            head_2_y += direction_snake_2[1]
 
         # Check if snake 1 is colliding with itself
-        if self.snake_1.is_self_colliding(direction_snake_1):
+        if direction_snake_1 and self.snake_1.is_self_colliding(direction_snake_1):
+                print("Snake 1 collides with itself")
+                return -1
+        elif self.snake_1.body.count((head_1_x, head_1_y)) > 1:
             print("Snake 1 collides with itself")
             return -1
 
         # Check if snake 2 is colliding with itself
-        if self.snake_2.is_self_colliding(direction_snake_2):
+        if direction_snake_2 and self.snake_2.is_self_colliding(direction_snake_2):
+            print("Snake 2 collides with itself")
+            return 1
+        elif self.snake_2.body.count((head_2_x, head_2_y)) > 1:
             print("Snake 2 collides with itself")
             return 1
 
@@ -224,15 +238,14 @@ class Game:
 
 if __name__ == '__main__':
     game = Game()
-    game_over = 0
 
     while True:
-        game.update_ui()
 
-        if game_over == 1:
+        if GAME_STATE == 1:
             raise Exception("Game Over: Winner is Player 1 (blue)")
-        elif game_over == -1:
+        elif GAME_STATE == -1:
             raise Exception("Game Over: Winner is Player 2 (green)")
         else:
             game.clock.tick(TICK_SPEED)
-            game_over, score = game.play_step()
+            GAME_STATE, score = game.play_step()
+            game.update_ui()
