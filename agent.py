@@ -13,9 +13,12 @@ class SnakeEnv(gym.Env):
         self.game = Game()
         self.action_space = spaces.Discrete(3)  # 1 = same dir; 2 = left; 3 = right
 
-    def reset(self):
+        # Define the observation space
+        self.observation_space = spaces.Box(low=-1, high=3, shape=(9,), dtype=np.int32)
+
+    def reset(self, seed=None):
         self.game = Game()
-        return self._get_observation()
+        return self._get_observation(), {}
 
     def step(self, action):
         if action == 2:  # move direction to left
@@ -38,13 +41,16 @@ class SnakeEnv(gym.Env):
 
         reward = rewards[self.game.game_state]
 
-        print(f"Game State: {self.game.game_state}, Reward: {reward}")
+        # print(f"Game State: {self.game.game_state}, Reward: {reward}")
 
-        return obs, reward, done, {}
+        terminated = done
+        truncated = False  # Set this to True if you have a time limit or other truncation condition
+
+        return obs, reward, terminated, truncated, {}
 
     def render(self, mode='human'):
         self.game.update_ui()
-        time.sleep(0.2)  # Add a delay of 0.1 seconds
+        time.sleep(0.05)  # Add a delay of 0.1 seconds
 
     def _get_observation(self):
         head_x, head_y = self.game.snake_1.body[0]
@@ -66,7 +72,7 @@ class SnakeEnv(gym.Env):
             else:
                 observation.append(-1)  # Wall
 
-        return observation
+        return np.array(observation)
 
 if __name__ == '__main__':
     env = SnakeEnv()
@@ -74,7 +80,7 @@ if __name__ == '__main__':
 
     for _ in range(1000):
         env.render()
-        obs, reward, done, info = env.step(env.action_space.sample())
+        obs, reward, done, _, info = env.step(env.action_space.sample())
         if done:
             env.render()
             if obs == 1:
