@@ -7,14 +7,18 @@ from game import Game
 class SnakeEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, show: bool = True):
+    def __init__(self, show: bool = True, grid_size=5):
         super(SnakeEnv, self).__init__()
         self.game = Game()
         self.action_space = spaces.Discrete(3)  # 1 = same dir; 2 = left; 3 = right
         self.show_ui = show
+        self.ai_score = 0
+        self.bot_score = 0
+        self.grid_size = grid_size
 
         # Define the observation space
-        self.observation_space = spaces.Box(low=-1, high=3, shape=(12,), dtype=np.int32)
+        num_cells = grid_size * grid_size
+        self.observation_space = spaces.Box(low=-1, high=3, shape=(num_cells + 3,), dtype=np.float32)
 
     def reset(self, seed=None):
         self.game = Game()
@@ -33,15 +37,19 @@ class SnakeEnv(gym.Env):
         # reward function for snake 1
         rewards = {
             2: -5,
-            1: 100,
-            0: 0,
-            -1: -100,
-            -2: 20
+            1: 10,
+            0: 0.02,
+            -1: -10,
+            -2: 8
         }
 
         reward = rewards[self.game.game_state]
 
-        # print(f"Game State: {self.game.game_state}, Reward: {reward}")
+        # Update scores based on game state
+        if self.game.game_state == 1:
+            self.ai_score += 1
+        elif self.game.game_state == -1:
+            self.bot_score += 1
 
         terminated = done
         truncated = False  # Set this to True if you have a time limit or other truncation condition
@@ -56,10 +64,11 @@ class SnakeEnv(gym.Env):
         if self.show_ui:
             self.render()
         head_x, head_y = self.game.snake_1.body[0]
+        half_size = self.grid_size // 2
         surrounding = [
-            (head_x - 1, head_y - 1), (head_x, head_y - 1), (head_x + 1, head_y - 1),
-            (head_x - 1, head_y), (head_x, head_y), (head_x + 1, head_y),
-            (head_x - 1, head_y + 1), (head_x, head_y + 1), (head_x + 1, head_y + 1)
+            (head_x + dx, head_y + dy)
+            for dx in range(-half_size, half_size + 1)
+            for dy in range(-half_size, half_size + 1)
         ]
         observation = []
         for cell in surrounding:
@@ -69,8 +78,7 @@ class SnakeEnv(gym.Env):
                 observation.append(2)  # Player snake body
             elif cell == (self.game.apple.x // self.game.block_size, self.game.apple.y // self.game.block_size):
                 observation.append(3)  # Apple
-            elif 0 <= cell[0] < self.game.w // self.game.block_size and 0 <= cell[
-                1] < self.game.h // self.game.block_size:
+            elif 0 <= cell[0] < self.game.w // self.game.block_size and 0 <= cell[1] < self.game.h // self.game.block_size:
                 observation.append(0)  # Empty space
             else:
                 observation.append(-1)  # Wall
