@@ -18,7 +18,6 @@ BLACK = (0, 0, 0)
 BLOCK_SIZE = 30
 HUMAN_PLAYER = False
 TICK_SPEED = 5
-GAME_STATE = 0
 
 
 class Game:
@@ -26,6 +25,8 @@ class Game:
     def __init__(self, w=600, h=480):
         self.w = w
         self.h = h
+
+        self.game_state = 0
 
         assert self.w % BLOCK_SIZE == 0, "Width not divisible by block size"
         assert self.h % BLOCK_SIZE == 0, "Height not divisible by block size"
@@ -130,8 +131,6 @@ class Game:
 
     def play_step(self):
 
-        global GAME_STATE
-
         # get new direction for snake
         if not HUMAN_PLAYER and isinstance(self.snake_1, BotSnake):
             snake_1_dir = self.snake_1.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
@@ -143,25 +142,25 @@ class Game:
         snake_2_dir = self.snake_2.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
 
         # move snake
-        self.snake_1.move(snake_1_dir, GAME_STATE == -2)
-        self.snake_2.move(snake_2_dir, GAME_STATE == 2)
+        self.snake_1.move(snake_1_dir, self.game_state == -2)
+        self.snake_2.move(snake_2_dir, self.game_state == 2)
 
         # check if game over
-        GAME_STATE = self.is_colliding()
+        self.game_state = self.is_colliding()
 
         # check if apple eaten
-        if GAME_STATE == -2:
+        if self.game_state == -2:
             print(f"Snake 1 gets Apple")
             self.score = Scores(self.score.player_1_score + 1, self.score.player_2_score)
             self.place_food()
 
-        elif GAME_STATE == 2:
+        elif self.game_state == 2:
             print(f"Snake 2 gets Apple")
             self.score = Scores(self.score.player_1_score, self.score.player_2_score + 1)
             self.place_food()
 
         # return game over, score
-        return GAME_STATE, self.score
+        return self.game_state, self.score
 
     def is_colliding(
             self,
@@ -241,9 +240,9 @@ if __name__ == '__main__':
 
     while True:
 
-        if GAME_STATE == 1:
+        if game.game_state == 1:
             raise Exception("Game Over: Winner is Player 1 (blue)")
-        elif GAME_STATE == -1:
+        elif game.game_state == -1:
             raise Exception("Game Over: Winner is Player 2 (green)")
         else:
             game.clock.tick(TICK_SPEED)
