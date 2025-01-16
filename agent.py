@@ -18,29 +18,52 @@ class SnakeEnv(gym.Env):
 
         # Define the observation space
         num_cells = grid_size * grid_size
-        self.observation_space = spaces.Box(low=-1, high=3, shape=(num_cells + 7,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-1, high=3, shape=(num_cells + 8,), dtype=np.float32)
 
     def reset(self, seed=None):
         self.game = Game()
         return (self._get_observation(), {})
 
     def step(self, action):
-        if action == 2:  # move direction to left
+        if action == 1:  # maintain current direction
+            pass
+        elif action == 2:  # turn left
             self.game.snake_1.direction = (-self.game.snake_1.direction[1], self.game.snake_1.direction[0])
-        elif action == 3:  # move direction to right
+        elif action == 0:  # turn right
             self.game.snake_1.direction = (self.game.snake_1.direction[1], -self.game.snake_1.direction[0])
 
         self.game.play_step()
         obs = self._get_observation()
         done = abs(self.game.game_state) == 1
 
+        # Calculate distance to the closest cell of the opponent snake
+        head_x, head_y = self.game.snake_1.body[0]
+        opponent_cells = self.game.snake_2.body
+        distances_to_opponent = [np.sqrt((cell[0] - head_x) ** 2 + (cell[1] - head_y) ** 2) for cell in opponent_cells]
+        min_distance_to_opponent = min(distances_to_opponent)
+
+        # Adjust reward values based on the distance to the opponent snake
+        if min_distance_to_opponent < 3:  # opponent is close
+            reward_for_0 = 0.5
+            reward_for_apple = 0.05
+        else:  # opponent is far
+            reward_for_0 = 0.02
+            reward_for_apple = 7
+
+        # Calculate distance to the center of the grid
+        center_x, center_y = self.game.w // (2 * self.game.block_size), self.game.h // (2 * self.game.block_size)
+        distance_to_center = np.sqrt((center_x - head_x) ** 2 + (center_y - head_y) ** 2)
+
+        # Add a small reward for being close to the center
+        center_reward = max(0, 1 - distance_to_center / max(center_x, center_y)) * 0.1
+
         # reward function for snake 1
         rewards = {
-            2: -0.5,
-            1: 10,
-            0: 0.1,
-            -1: -30,
-            -2: 3
+            2: 0,
+            1: 50,
+            0: reward_for_0 + center_reward,
+            -1: -50,
+            -2: reward_for_apple
         }
 
         reward = rewards[self.game.game_state]
@@ -93,13 +116,16 @@ class SnakeEnv(gym.Env):
         observation.append(distance_to_apple)
         observation.extend(direction_to_apple)
 
-        # Append the direction of the opponent's snake
-        direction_snake_2 = self.game.snake_2.direction
-        observation.extend(direction_snake_2)
-
         # Append the direction of the AI snake
         direction_snake_1 = self.game.snake_1.direction
         observation.extend(direction_snake_1)
+
+        # Calculate distances to the closest 3 cells of the opponent snake
+        opponent_cells = self.game.snake_2.body
+        distances_to_opponent = sorted(
+            [np.sqrt((cell[0] - head_x) ** 2 + (cell[1] - head_y) ** 2) for cell in opponent_cells]
+        )[:3]
+        observation.extend(distances_to_opponent)
 
         return np.array(observation)
 

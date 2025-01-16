@@ -2,28 +2,30 @@ from stable_baselines3 import PPO
 from agent import SnakeEnv
 
 
-train_mode: bool = True
-model_nr: int = 16
+train_mode: bool = False
+model_nr: int = 1
 
 # Create the environment
 env = SnakeEnv(show=not train_mode)
 
 # Create the PPO model
-model = PPO("MlpPolicy", env, verbose=1)
+model = PPO("MlpPolicy", env, verbose=1, policy_kwargs=dict(net_arch=[64, 64]))
 
 if train_mode:
-    model.learn(total_timesteps=100000)
+    model.learn(total_timesteps=300000)
     model.save(f"ppo_snake_{model_nr}")
 else:
     model = PPO.load(f"ppo_snake_{model_nr}")
 
     # Test the trained model
     obs, info = env.reset()
-    for _ in range(2000):
+    games = 0
+    while games < 20:
         action, _states = model.predict(obs)
         obs, rewards, done, truncated, info = env.step(action)
         env.render()
         if done:
+            games += 1
             obs, info = env.reset()
 
     print(f"Bot has won {env.bot_score} times")
