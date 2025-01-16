@@ -1,5 +1,4 @@
 import time
-
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
@@ -8,17 +7,18 @@ from game import Game
 class SnakeEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self, show: bool = True):
         super(SnakeEnv, self).__init__()
         self.game = Game()
         self.action_space = spaces.Discrete(3)  # 1 = same dir; 2 = left; 3 = right
+        self.show_ui = show
 
         # Define the observation space
-        self.observation_space = spaces.Box(low=-1, high=3, shape=(9,), dtype=np.int32)
+        self.observation_space = spaces.Box(low=-1, high=3, shape=(12,), dtype=np.int32)
 
     def reset(self, seed=None):
         self.game = Game()
-        return self._get_observation(), {}
+        return (self._get_observation(), {})
 
     def step(self, action):
         if action == 2:  # move direction to left
@@ -32,11 +32,11 @@ class SnakeEnv(gym.Env):
 
         # reward function for snake 1
         rewards = {
-            2: -0.5,
-            1: 10,
-            0: 0.1,
-            -1: -20,
-            -2: 1
+            2: -5,
+            1: 100,
+            0: 0,
+            -1: -100,
+            -2: 20
         }
 
         reward = rewards[self.game.game_state]
@@ -50,9 +50,11 @@ class SnakeEnv(gym.Env):
 
     def render(self, mode='human'):
         self.game.update_ui()
-        time.sleep(0.05)  # Add a delay of 0.1 seconds
+        time.sleep(0.05)  # Add a delay
 
     def _get_observation(self):
+        if self.show_ui:
+            self.render()
         head_x, head_y = self.game.snake_1.body[0]
         surrounding = [
             (head_x - 1, head_y - 1), (head_x, head_y - 1), (head_x + 1, head_y - 1),
@@ -67,10 +69,20 @@ class SnakeEnv(gym.Env):
                 observation.append(2)  # Player snake body
             elif cell == (self.game.apple.x // self.game.block_size, self.game.apple.y // self.game.block_size):
                 observation.append(3)  # Apple
-            elif 0 <= cell[0] < self.game.w // self.game.block_size and 0 <= cell[1] < self.game.h // self.game.block_size:
+            elif 0 <= cell[0] < self.game.w // self.game.block_size and 0 <= cell[
+                1] < self.game.h // self.game.block_size:
                 observation.append(0)  # Empty space
             else:
                 observation.append(-1)  # Wall
+
+        # Calculate distance and direction to the apple
+        apple_x, apple_y = self.game.apple.x // self.game.block_size, self.game.apple.y // self.game.block_size
+        distance_to_apple = np.sqrt((apple_x - head_x) ** 2 + (apple_y - head_y) ** 2)
+        direction_to_apple = (apple_x - head_x, apple_y - head_y)
+
+        # Append distance and direction to the observation
+        observation.append(distance_to_apple)
+        observation.extend(direction_to_apple)
 
         return np.array(observation)
 
@@ -83,8 +95,8 @@ if __name__ == '__main__':
         obs, reward, done, _, info = env.step(env.action_space.sample())
         if done:
             env.render()
-            if obs == 1:
+            if np.any(obs == 1):
                 print("Game Over! Player 1 wins!")
-            elif obs == -1:
+            elif np.any(obs == -1):
                 print("Game Over! Player 2 wins!")
             break
