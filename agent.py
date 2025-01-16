@@ -18,15 +18,14 @@ class SnakeEnv(gym.Env):
         return self._get_observation()
 
     def step(self, action):
-
-        if action == 2: # move direction to left
+        if action == 2:  # move direction to left
             self.game.snake_1.direction = (-self.game.snake_1.direction[1], self.game.snake_1.direction[0])
-        elif action == 3: # move direction to right
+        elif action == 3:  # move direction to right
             self.game.snake_1.direction = (self.game.snake_1.direction[1], -self.game.snake_1.direction[0])
 
         self.game.play_step()
         obs = self._get_observation()
-        done = abs(obs) == 1
+        done = abs(self.game.game_state) == 1
 
         # reward function for snake 1
         rewards = {
@@ -37,18 +36,37 @@ class SnakeEnv(gym.Env):
             -2: 1
         }
 
-        reward = rewards[obs]
+        reward = rewards[self.game.game_state]
 
-        print(f"Game State: {obs}, Reward: {reward}")
+        print(f"Game State: {self.game.game_state}, Reward: {reward}")
 
         return obs, reward, done, {}
 
     def render(self, mode='human'):
         self.game.update_ui()
-        time.sleep(0.3)  # Add a delay of 0.1 seconds
+        time.sleep(0.2)  # Add a delay of 0.1 seconds
 
     def _get_observation(self):
-        return self.game.game_state
+        head_x, head_y = self.game.snake_1.body[0]
+        surrounding = [
+            (head_x - 1, head_y - 1), (head_x, head_y - 1), (head_x + 1, head_y - 1),
+            (head_x - 1, head_y), (head_x, head_y), (head_x + 1, head_y),
+            (head_x - 1, head_y + 1), (head_x, head_y + 1), (head_x + 1, head_y + 1)
+        ]
+        observation = []
+        for cell in surrounding:
+            if cell in self.game.snake_1.body:
+                observation.append(1)  # AI snake body
+            elif cell in self.game.snake_2.body:
+                observation.append(2)  # Player snake body
+            elif cell == (self.game.apple.x // self.game.block_size, self.game.apple.y // self.game.block_size):
+                observation.append(3)  # Apple
+            elif 0 <= cell[0] < self.game.w // self.game.block_size and 0 <= cell[1] < self.game.h // self.game.block_size:
+                observation.append(0)  # Empty space
+            else:
+                observation.append(-1)  # Wall
+
+        return observation
 
 if __name__ == '__main__':
     env = SnakeEnv()

@@ -25,6 +25,7 @@ class Game:
     def __init__(self, w=600, h=480):
         self.w = w
         self.h = h
+        self.block_size = BLOCK_SIZE
 
         self.game_state = 0
 
