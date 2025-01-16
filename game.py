@@ -31,11 +31,7 @@ class Game:
         assert self.w % BLOCK_SIZE == 0, "Width not divisible by block size"
         assert self.h % BLOCK_SIZE == 0, "Height not divisible by block size"
 
-        if not HUMAN_PLAYER:
-            self.snake_1 = BotSnake(7, 7, 5, (0, 1))
-        else:
-            self.snake_1 = PlayerSnake(15, 11, 5, (0, 1))
-
+        self.snake_1 = Snake(5, 5, 5, (1, 0))
         self.snake_2 = BotSnake(12, 12, 5, (1, 0))
 
         self.display = pygame.display.set_mode((w,h))
@@ -134,9 +130,10 @@ class Game:
         # get new direction for snake
         if not HUMAN_PLAYER and isinstance(self.snake_1, BotSnake):
             snake_1_dir = self.snake_1.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
-        else:
-            assert isinstance(self.snake_1, PlayerSnake), "Player 1 is not a PlayerSnake"
+        elif isinstance(self.snake_1, PlayerSnake):
             self.handle_events(self.snake_1)
+            snake_1_dir = self.snake_1.direction
+        else:
             snake_1_dir = self.snake_1.direction
 
         snake_2_dir = self.snake_2.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
