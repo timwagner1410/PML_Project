@@ -18,7 +18,7 @@ class SnakeEnv(gym.Env):
 
         # Define the observation space
         num_cells = grid_size * grid_size
-        self.observation_space = spaces.Box(low=-1, high=3, shape=(num_cells + 3,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-1, high=3, shape=(num_cells + 7,), dtype=np.float32)
 
     def reset(self, seed=None):
         self.game = Game()
@@ -36,11 +36,11 @@ class SnakeEnv(gym.Env):
 
         # reward function for snake 1
         rewards = {
-            2: -5,
+            2: -0.5,
             1: 10,
-            0: 0.02,
-            -1: -10,
-            -2: 8
+            0: 0.1,
+            -1: -30,
+            -2: 3
         }
 
         reward = rewards[self.game.game_state]
@@ -78,7 +78,8 @@ class SnakeEnv(gym.Env):
                 observation.append(2)  # Player snake body
             elif cell == (self.game.apple.x // self.game.block_size, self.game.apple.y // self.game.block_size):
                 observation.append(3)  # Apple
-            elif 0 <= cell[0] < self.game.w // self.game.block_size and 0 <= cell[1] < self.game.h // self.game.block_size:
+            elif 0 <= cell[0] < self.game.w // self.game.block_size and 0 <= cell[
+                1] < self.game.h // self.game.block_size:
                 observation.append(0)  # Empty space
             else:
                 observation.append(-1)  # Wall
@@ -91,6 +92,14 @@ class SnakeEnv(gym.Env):
         # Append distance and direction to the observation
         observation.append(distance_to_apple)
         observation.extend(direction_to_apple)
+
+        # Append the direction of the opponent's snake
+        direction_snake_2 = self.game.snake_2.direction
+        observation.extend(direction_snake_2)
+
+        # Append the direction of the AI snake
+        direction_snake_1 = self.game.snake_1.direction
+        observation.extend(direction_snake_1)
 
         return np.array(observation)
 
