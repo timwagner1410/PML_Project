@@ -1,24 +1,16 @@
 from stable_baselines3 import PPO
-from stable_baselines3.common.env_checker import check_env
+from stable_baselines3.common.vec_env import DummyVecEnv
 from agent import SnakeEnv
 
 # Create the environment
-env = SnakeEnv()
-
-# Check if the environment follows the Gym API
-check_env(env, warn=True)
+env = DummyVecEnv([lambda: SnakeEnv(show=False)])
 
 # Create the PPO model
 model = PPO("MlpPolicy", env, verbose=1)
 
-# Train the model
 model.learn(total_timesteps=100000)
-
-# Save the model
-model.save("ppo_snake")
-
-# To load the model later
-# model = PPO.load("ppo_snake")
+model.save("ppo_snake_4")
+# model = PPO.load("ppo_snake_4")
 
 # Test the trained model
 obs = env.reset()
