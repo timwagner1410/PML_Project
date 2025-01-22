@@ -1,26 +1,26 @@
 from stable_baselines3 import PPO
-from agent import SnakeEnv
+from safety_agent import SafeSnakeEnv
 
 
 train_mode: bool = False
-model_nr: int = 6
+model_nr: int = 5
 
 # Create the environment
-env = SnakeEnv(show=not train_mode)
+env = SafeSnakeEnv(show=not train_mode)
 
 # Create the PPO model
-model = PPO("MlpPolicy", env, verbose=1, gamma=0.99)
+model = PPO("MlpPolicy", env, verbose=1)
 
 if train_mode:
     model.learn(total_timesteps=250000)
-    model.save(f"ppo_snake_{model_nr}")
+    model.save(f"ppo_snake_safe_{model_nr}")
 else:
-    model = PPO.load(f"ppo_snake_{model_nr}")
+    model = PPO.load(f"ppo_snake_safe_{model_nr}")
 
     # Test the trained model
     obs, info = env.reset()
     games = 0
-    while games < 21:
+    while games < 101:
         action, _states = model.predict(obs)
         obs, rewards, done, truncated, info = env.step(action)
         env.render()
