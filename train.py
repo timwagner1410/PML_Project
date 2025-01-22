@@ -1,30 +1,31 @@
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
+
 from agent import SnakeEnv
 
-# Create the environment
-env = SnakeEnv()
+train_mode: bool = False
+model_nr: int = 2
 
-# Check if the environment follows the Gym API
-check_env(env, warn=True)
+# Create the environment
+env = SnakeEnv(show=not train_mode)
 
 # Create the PPO model
 model = PPO("MlpPolicy", env, verbose=1)
 
-# Train the model
-model.learn(total_timesteps=100000)
+if train_mode:
+    model.learn(total_timesteps=100000)
+    model.save(f"ppo_snake_{model_nr}")
+else:
+    model = PPO.load(f"ppo_snake_{model_nr}")
 
-# Save the model
-model.save("ppo_snake")
+    # Test the trained model
+    obs, info = env.reset()
+    for _ in range(2000):
+        action, _states = model.predict(obs)
+        obs, rewards, done, truncated, info = env.step(action)
+        env.render()
+        if done:
+            obs, info = env.reset()
 
-# To load the model later
-# model = PPO.load("ppo_snake")
-
-# Test the trained model
-obs = env.reset()
-for _ in range(1000):
-    action, _states = model.predict(obs)
-    obs, rewards, done, info = env.step(action)
-    env.render()
-    if done:
-        obs = env.reset()
+    print(f"Bot has won {env.bot_score} times")
+    print(f"AI has won {env.ai_score} times")
