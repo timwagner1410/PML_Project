@@ -8,7 +8,7 @@ gym.envs.registration.register(
     entry_point='safeagent:SnakeSafetyEnv',
 )
 
-train_mode: bool = True
+train_mode: bool = False
 model_nr: int = 2
 
 # Create the environment
@@ -23,7 +23,7 @@ model = PPO("MlpPolicy", vec_env, verbose=1)
 
 if train_mode:
     # Training mode
-    model.learn(total_timesteps=100000)
+    model.learn(total_timesteps=500000)
 
     # After training, collect safety cost data for diagnostics
     obs, info = env.reset()

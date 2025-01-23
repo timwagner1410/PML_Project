@@ -20,7 +20,7 @@ else:
 
     # Test the trained model
     obs, info = env.reset()
-    for _ in range(2000):
+    for _ in range(1000):
         action, _states = model.predict(obs)
         obs, rewards, done, truncated, info = env.step(action)
         env.render()

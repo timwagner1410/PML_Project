@@ -32,8 +32,20 @@ class Game:
         assert self.w % BLOCK_SIZE == 0, "Width not divisible by block size"
         assert self.h % BLOCK_SIZE == 0, "Height not divisible by block size"
 
-        self.snake_1 = Snake(5, 5, 5, (1, 0))
-        self.snake_2 = BotSnake(12, 12, 5, (1, 0))
+        # Initialize the snakes with random positions and directions
+        all_positions = [Point(x, y) for x in range(5, self.w // BLOCK_SIZE - 5) for y in
+                         range(5, self.h // BLOCK_SIZE - 5)]
+        snake_1_start = random.choice(all_positions)
+        all_positions.remove(snake_1_start)
+        snake_2_start = random.choice(all_positions)
+
+        # Define possible directions
+        directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+        snake_1_direction = random.choice(directions)
+        snake_2_direction = random.choice(directions)
+
+        self.snake_1 = Snake(snake_1_start.x, snake_1_start.y, 5, snake_1_direction)
+        self.snake_2 = BotSnake(snake_2_start.x, snake_2_start.y, 5, snake_2_direction)
 
         self.display = pygame.display.set_mode((w,h))
         pygame.display.set_caption('Snake')

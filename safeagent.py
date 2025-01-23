@@ -56,10 +56,10 @@ class SnakeSafetyEnv(gym.Env):
         # Reward function
         rewards = {
             2: 0,    # Snake of player 2 gets apple
-            1: 70,   # Snake of player 2 collides
+            1: 100,   # Snake of player 2 collides
             0: 1,    # Nothing happens
-            -1: -100, # Snake of player 1 collides
-            -2: 10  # Snake of player 1 gets apple
+            -1: -150, # Snake of player 1 collides
+            -2: 15 # Snake of player 1 gets apple
         }
 
         # Safety cost: Add penalties for unsafe behavior
@@ -84,7 +84,7 @@ class SnakeSafetyEnv(gym.Env):
     def render(self, mode='human'):
         if self.show_ui:
             self.game.update_ui()  # Render the game UI
-            time.sleep(0.05)
+            time.sleep(0.1)
 
     def _get_observation(self):
         # Build a grid representing the environment
