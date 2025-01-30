@@ -17,7 +17,7 @@ To view how the basic Snake AI performs:
 Make sure train_mode is set to False in the train.py file.
 
 Run **train.py**
-This will allow you to see how the basic AI plays the game without training it.
+This will allow you to see how the basic AI plays.
 
 ### 2.2. Safe Snake AI Performance
 To view how the safe Snake AI performs:
@@ -30,8 +30,6 @@ This will allow you to observe the safe AI's performance.
 ## 3. Playing Against the Snake AI
 ### 3.1. Play Against Basic Snake AI
 To play against the basic Snake AI, use the following steps:
-
-Set up train_mode to False in the ai_vs_human.py file.
 
 Run **ai_vs_human.py**
 You will be controlling the green snake using the arrow keys to navigate and avoid the AI's snake.
