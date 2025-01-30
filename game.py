@@ -16,13 +16,14 @@ GREEN = (0, 255, 0)
 BLACK = (0, 0, 0)
 
 BLOCK_SIZE = 30
-HUMAN_PLAYER = False
+SNAKE_1 = "bot"
+SNAKE_2 = "bot"
 TICK_SPEED = 5
 
 
 class Game:
 
-    def __init__(self, w=600, h=480):
+    def __init__(self, w=600, h=480, snake_1_type: str = "snake", snake_2_type: str = "bot"):
         self.w = w
         self.h = h
         self.block_size = BLOCK_SIZE
@@ -31,9 +32,18 @@ class Game:
 
         assert self.w % BLOCK_SIZE == 0, "Width not divisible by block size"
         assert self.h % BLOCK_SIZE == 0, "Height not divisible by block size"
+        assert snake_1_type in ["snake", "bot"], f"Invalid snake type for player 1: Input - {snake_1_type}, Expected - snake/bot"
+        assert snake_2_type in ["player", "bot"], f"Invalid snake type for player 2: Input - {snake_2_type}, Expected - player/bot"
 
-        self.snake_1 = Snake(5, 5, 5, (1, 0))
-        self.snake_2 = BotSnake(12, 12, 5, (1, 0))
+        if snake_1_type == "snake":
+            self.snake_1 = Snake(5, 5, 5, (1, 0))
+        else:
+            self.snake_1 = BotSnake(5, 5, 5, (1, 0))
+
+        if snake_2_type == "bot":
+            self.snake_2 = BotSnake(12, 12, 5, (1, 0))
+        else:
+            self.snake_2 = PlayerSnake(12, 12, 5, (1, 0))
 
         self.display = pygame.display.set_mode((w,h))
         pygame.display.set_caption('Snake')
@@ -129,15 +139,16 @@ class Game:
     def play_step(self):
 
         # get new direction for snake
-        if not HUMAN_PLAYER and isinstance(self.snake_1, BotSnake):
+        if isinstance(self.snake_1, BotSnake):
             snake_1_dir = self.snake_1.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
-        elif isinstance(self.snake_1, PlayerSnake):
-            self.handle_events(self.snake_1)
-            snake_1_dir = self.snake_1.direction
         else:
             snake_1_dir = self.snake_1.direction
 
-        snake_2_dir = self.snake_2.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
+        if isinstance(self.snake_2, BotSnake):
+            snake_2_dir = self.snake_2.get_random_biased_direction((self.w, self.h, BLOCK_SIZE), self.apple)
+        else:
+            self.handle_events(self.snake_2)
+            snake_2_dir = self.snake_2.direction
 
         # move snake
         self.snake_1.move(snake_1_dir, self.game_state == -2)
@@ -234,7 +245,7 @@ class Game:
         return 0
 
 if __name__ == '__main__':
-    game = Game()
+    game = Game(snake_1_type=SNAKE_1, snake_2_type=SNAKE_2)
 
     while True:
 
