@@ -20,7 +20,7 @@ else:
     # Test the trained model
     obs, info = env.reset()
     games = 0
-    while games < 101:
+    while games < 5:
         action, _states = model.predict(obs)
         obs, rewards, done, truncated, info = env.step(action)
         env.render()

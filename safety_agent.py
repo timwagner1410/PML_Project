@@ -93,7 +93,7 @@ class SafeSnakeEnv(gym.Env):
     def render(self, mode='human'):
         self.game.update_ui()
         if self.show_ui:
-            time.sleep(0.002)  # Add a delay
+            time.sleep(0.03)  # Add a delay
 
     def _get_observation(self):
         if self.show_ui:
